@@ -33,16 +33,17 @@ from openssl_crypto import (
 )
 
 HMAC_LEN = 32   # HMAC-SHA256 output length in bytes
+DEFAULT_PORT = 5050
 
 
 class Peer:
-    def __init__(self, is_server, host="127.0.0.1", port=5001):
+    def __init__(self, is_server, host="127.0.0.1"):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
         self.is_server = is_server
         self.host      = host
-        self.port      = port
+        self.port      = DEFAULT_PORT
         self.conn      = None
 
         # Working directory for key files and temp crypto blobs

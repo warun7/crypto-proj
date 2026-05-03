@@ -59,7 +59,7 @@ def main():
 
     # Bind to all interfaces so both LAN and WAN clients can connect.
     # Port 5050: unprivileged (no sudo needed), generally open on college LAN.
-    peer = Peer(is_server=True, host="0.0.0.0", port=PORT)
+    peer = Peer(is_server=True, host="0.0.0.0")
     peer.start()
 
 
