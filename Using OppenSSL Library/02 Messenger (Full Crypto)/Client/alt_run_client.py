@@ -66,7 +66,7 @@ def main():
     print(f"[INFO] Hostname   : {hostname}")
     print(f"[INFO] Server IP  : {server_ip}")
 
-    peer = Peer(is_server=False, host=server_ip)
+    peer = Peer(is_server=False, host=server_ip, port=5050)
     peer.start()
 
 

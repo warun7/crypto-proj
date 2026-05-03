@@ -54,8 +54,8 @@ def main():
     print()
 
     # Bind to all interfaces so both LAN and WAN clients can connect.
-    # (Make sure your firewall/router forwards TCP port 5001 to this machine.)
-    peer = Peer(is_server=True, host="0.0.0.0", port=5001)
+    # Port 5050: unprivileged (no sudo needed), generally open on college LAN.
+    peer = Peer(is_server=True, host="0.0.0.0", port=5050)
     peer.start()
 
 
