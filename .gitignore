@@ -1,0 +1,16 @@
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# OpenSSL temp key files generated at runtime
+**/Server_keys/
+**/Client_keys/
+**/test_keys/
+
+# Jupyter checkpoints
+.ipynb_checkpoints/
+
+# Editor
+.vscode/
+*.swp
