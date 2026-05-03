@@ -2,8 +2,8 @@
 alt_run_client.py — Launch the client peer.
 
 Usage:
-    python3 alt_run_client.py client <server_ip>
-    python3 alt_run_client.py client <server_ip> --proxy socks5://<proxy_host>:<proxy_port>
+    python3 alt_run_client.py client <server_ip> [--port <port>]
+    python3 alt_run_client.py client <server_ip> [--proxy socks5://<proxy_host>:<proxy_port>]
 
 The --proxy flag lets you tunnel through a SOCKS5 proxy when you are behind a
 restrictive firewall (requires: pip install PySocks).
@@ -48,7 +48,7 @@ def apply_socks5_proxy(proxy_url):
 
 def main():
     if len(sys.argv) < 3 or sys.argv[1].lower() != "client":
-        print("Usage: python3 alt_run_client.py client <server_ip> [--proxy socks5://host:port]")
+        print("Usage: python3 alt_run_client.py client <server_ip> [--port <port>] [--proxy socks5://host:port]")
         sys.exit(1)
 
     server_ip = sys.argv[2]
@@ -61,12 +61,21 @@ def main():
             sys.exit(1)
         apply_socks5_proxy(sys.argv[idx + 1])
 
+    # Optional --port flag (for ngrok or custom setups)
+    target_port = 5050
+    if "--port" in sys.argv:
+        idx = sys.argv.index("--port")
+        if idx + 1 >= len(sys.argv):
+            print("[ERROR] --port requires an argument, e.g. --port 14884")
+            sys.exit(1)
+        target_port = int(sys.argv[idx + 1])
+
     local_ip, hostname = get_local_ip()
     print(f"[INFO] Local IP   : {local_ip}")
     print(f"[INFO] Hostname   : {hostname}")
-    print(f"[INFO] Server IP  : {server_ip}")
+    print(f"[INFO] Server IP  : {server_ip}:{target_port}")
 
-    peer = Peer(is_server=False, host=server_ip, port=5050)
+    peer = Peer(is_server=False, host=server_ip, port=target_port)
     peer.start()
 
 
