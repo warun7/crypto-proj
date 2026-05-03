@@ -6,7 +6,7 @@ Usage:
 
 The server binds to 0.0.0.0 (all interfaces) so that clients from any
 network — including different Wi-Fi networks / public IPs — can connect
-directly using this machine's public IP address and port 5001.
+directly using this machine's public IP address and port 5050.
 
 To find your public IP run:
     curl -s ifconfig.me
@@ -41,21 +41,25 @@ def get_public_ip():
 
 
 def main():
+    PORT = 5050
     local_ip, hostname = get_local_ip()
     public_ip = get_public_ip()
 
     print(f"[INFO] Hostname   : {hostname}")
     print(f"[INFO] Local IP   : {local_ip}")
     print(f"[INFO] Public IP  : {public_ip}")
-    print(f"[INFO] Port       : 5001")
+    print(f"[INFO] Port       : {PORT}")
     print()
-    print("[INFO] Share your PUBLIC IP with the client:")
+    print("[INFO] Share your LOCAL IP with the client (same WiFi):")
+    print(f"         python3 alt_run_client.py client {local_ip}")
+    print()
+    print("[INFO] Share your PUBLIC IP with the client (different network):")
     print(f"         python3 alt_run_client.py client {public_ip}")
     print()
 
     # Bind to all interfaces so both LAN and WAN clients can connect.
     # Port 5050: unprivileged (no sudo needed), generally open on college LAN.
-    peer = Peer(is_server=True, host="0.0.0.0", port=5050)
+    peer = Peer(is_server=True, host="0.0.0.0", port=PORT)
     peer.start()
 
 
