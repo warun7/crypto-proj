@@ -15,14 +15,16 @@ These commands assume the OpenSSL full-crypto version:
 ## 1) With Tailscale (recommended)
 
 Use this when devices are on different Wi-Fi networks.
+Both devices can use different Tailscale accounts as long as they are in the same tailnet.
 
 ### Steps
 
 1. Install Tailscale on both devices.
-2. Sign in both devices to the same Tailscale account (tailnet).
-3. Start server on server device.
-4. Find server Tailscale IP (usually `100.x.x.x`).
-5. Start client using that Tailscale IP.
+2. Add both devices to the same tailnet.
+3. If the devices use different accounts, invite the other account to your tailnet or share the device in Tailscale admin.
+4. Start server on server device.
+5. Find server Tailscale IP (usually `100.x.x.x`).
+6. Start client using that Tailscale IP.
 
 ### Server command
 
@@ -82,6 +84,7 @@ Example:
 
 ```powershell
 python .\alt_run_client.py client 192.168.1.25
+```
 
 ---
 
