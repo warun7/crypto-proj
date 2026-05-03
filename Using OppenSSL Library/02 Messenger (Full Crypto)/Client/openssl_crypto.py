@@ -84,6 +84,7 @@ def sign_data(data_bytes, identity_priv_path, key_dir):
     Returns:
         signature : bytes  (DER-encoded ECDSA signature)
     """
+    os.makedirs(key_dir, exist_ok=True)
     data_path = os.path.join(key_dir, "to_sign.bin")
     sig_path  = os.path.join(key_dir, "signature.bin")
 
@@ -107,6 +108,7 @@ def verify_signature(data_bytes, sig_bytes, peer_identity_pub_pem, key_dir):
     Returns:
         True if valid, False otherwise.
     """
+    os.makedirs(key_dir, exist_ok=True)
     data_path = os.path.join(key_dir, "to_verify.bin")
     sig_path  = os.path.join(key_dir, "peer_sig.bin")
     pub_path  = os.path.join(key_dir, "peer_identity_pub.pem")
@@ -138,6 +140,7 @@ def perform_ecdh(key_dir, peer_ecdh_pub_pem):
     Returns:
         shared_secret : bytes
     """
+    os.makedirs(key_dir, exist_ok=True)
     priv_path       = os.path.join(key_dir, "ecdh_private.pem")
     peer_pub_path   = os.path.join(key_dir, "peer_ecdh_pub.pem")
     secret_path     = os.path.join(key_dir, "shared_secret.bin")
@@ -248,6 +251,7 @@ def compute_hmac(data, mac_key, key_dir):
     Returns:
         tag : bytes[32]
     """
+    os.makedirs(key_dir, exist_ok=True)
     data_path = os.path.join(key_dir, "hmac_input.bin")
     hmac_path = os.path.join(key_dir, "hmac.bin")
 
