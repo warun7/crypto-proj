@@ -1,3 +1,5 @@
+
+
 """
 peer_openssl.py  —  Server side
 
@@ -26,11 +28,12 @@ import struct
 import threading
 from openssl_crypto import (
     generate_identity_keypair, generate_ephemeral_keypair,
+    print_curve_order_n,
     sign_data, verify_signature,
     perform_ecdh, derive_keys,
     aes_cbc_encrypt, aes_cbc_decrypt,
     compute_hmac, verify_hmac,
-    pack_fields, recv_exact, send_framed, recv_framed,
+    pack_fields, recv_exact, send_framed, recv_framed
 )
 
 HMAC_LEN = 32   # HMAC-SHA256 output length in bytes
@@ -116,7 +119,10 @@ class Peer:
 
         # --- ECDH shared secret ---
         shared_secret = perform_ecdh(self.key_dir, peer_ecdh_pub)
-        print(f"[+] ECDH shared secret derived ({len(shared_secret)} bytes)")
+        print(
+            f"[+] ECDH shared secret derived ({len(shared_secret)} bytes): "
+            f"{shared_secret.hex()}"
+        )
 
         # --- Key derivation ---
         self.enc_key, self.mac_key = derive_keys(shared_secret)
@@ -131,6 +137,7 @@ class Peer:
 
     def start(self):
         """Bind, listen, accept, run handshake, then start messaging."""
+        print_curve_order_n()
         # Bind to 0.0.0.0 so clients from any network can connect
         self.sock.bind((self.host, self.port))
         self.sock.listen(1)
@@ -139,7 +146,7 @@ class Peer:
         conn, addr = self.sock.accept()
         print(f"[*] Connection accepted from {addr[0]}:{addr[1]}")
         self.conn = conn
-
+        
         self._handshake()
         self._start_threads()
 
@@ -163,6 +170,7 @@ class Peer:
             frame : bytes
         """
         iv, ciphertext = aes_cbc_encrypt(plaintext_bytes, self.enc_key, self.key_dir)
+        # Intentionally tamper with the IV for error-path testing.
         mac_input = iv + ciphertext
         tag = compute_hmac(mac_input, self.mac_key, self.key_dir)
 
@@ -201,7 +209,12 @@ class Peer:
             raise ValueError("[!] HMAC verification FAILED — message tampered!")
 
         # Decrypt
-        return aes_cbc_decrypt(ciphertext, self.enc_key, iv, self.key_dir)
+        try:
+            return aes_cbc_decrypt(ciphertext, self.enc_key, iv, self.key_dir)
+        except Exception as e:
+            raise ValueError(
+                "[!] Decryption FAILED — message corrupted or padding invalid!"
+            ) from e
 
     def _receive_loop(self):
         """Receive encrypted frames, verify MAC, decrypt, and display."""
@@ -212,14 +225,18 @@ class Peer:
                     print("\n[Peer disconnected]")
                     break
                 plaintext = self._verify_and_decrypt(frame)
-                message   = plaintext.decode()
+                try:
+                    message = plaintext.decode()
+                except UnicodeDecodeError as e:
+                    print(f"\n[!] UTF-8 decode FAILED — message corrupted! ({e})")
+                    continue
                 if message.strip().lower() == "exit":
                     print("\n[Peer exited]")
                     break
                 print(f"\n[Peer]: {message}")
             except ValueError as e:
                 print(f"\n{e}")
-                break
+                continue
             except Exception as e:
                 print(f"\n[Receive error]: {e}")
                 break
@@ -242,3 +259,4 @@ class Peer:
         self.conn.close()
         self.sock.close()
         print("[*] Connection closed.")
+

@@ -1,3 +1,4 @@
+
 """
 openssl_crypto.py — Cryptographic primitives via OpenSSL CLI subprocess calls.
 
@@ -16,6 +17,15 @@ import os
 import struct
 import hashlib
 import hmac as _hmac_mod   # Python stdlib hmac used only for compare_digest
+
+CURVE_NAME = "prime256v1"
+CURVE_ORDER_N_HEX = "FFFFFFFF00000000FFFFFFFFFFFFFFFFBCE6FAADA7179E84F3B9CAC2FC632551"
+CURVE_ORDER_N = int(CURVE_ORDER_N_HEX, 16)
+
+
+def print_curve_order_n():
+    """Print the P-256 subgroup order used by this connection."""
+    print(f"[INFO] P-256 curve order n = {CURVE_ORDER_N}")
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -36,7 +46,7 @@ def generate_identity_keypair(key_dir):
 
     # Generate private key on the NIST P-256 curve
     subprocess.run(
-        ["openssl", "ecparam", "-name", "prime256v1", "-genkey", "-noout", "-out", priv],
+        ["openssl", "ecparam", "-name", CURVE_NAME, "-genkey", "-noout", "-out", priv],
         check=True, capture_output=True
     )
     # Export the corresponding public key in PEM format
@@ -61,7 +71,7 @@ def generate_ephemeral_keypair(key_dir):
     pub  = os.path.join(key_dir, "ecdh_public.pem")
 
     subprocess.run(
-        ["openssl", "ecparam", "-name", "prime256v1", "-genkey", "-noout", "-out", priv],
+        ["openssl", "ecparam", "-name", CURVE_NAME, "-genkey", "-noout", "-out", priv],
         check=True, capture_output=True
     )
     subprocess.run(
@@ -163,6 +173,33 @@ def perform_ecdh(key_dir, peer_ecdh_pub_pem):
 # ──────────────────────────────────────────────────────────────────────────────
 # Key Derivation  (SHA-256 with domain-separation labels)
 # ──────────────────────────────────────────────────────────────────────────────
+def get_curve_order(curve_name="prime256v1"):
+    """Return the subgroup order n for an OpenSSL EC curve as an integer."""
+    result = subprocess.run(
+        ["openssl", "ecparam", "-name", curve_name, "-param_enc", "explicit", "-text", "-noout"],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    order_lines = []
+    capturing = False
+
+    for line in result.stdout.splitlines():
+        stripped = line.strip()
+
+        if stripped.startswith("Order:"):
+            capturing = True
+            continue
+
+        if capturing:
+            if not stripped or stripped.startswith("Cofactor:") or stripped.startswith("Seed:"):
+                break
+            order_lines.append(stripped)
+
+    order_hex = "".join(part.replace(":", "") for part in order_lines).replace(" ", "")
+    return int(order_hex, 16)
+
 
 def derive_keys(shared_secret):
     """
@@ -316,3 +353,4 @@ def recv_framed(conn):
     raw_len = recv_exact(conn, 4)
     length  = struct.unpack(">I", raw_len)[0]
     return recv_exact(conn, length)
+
