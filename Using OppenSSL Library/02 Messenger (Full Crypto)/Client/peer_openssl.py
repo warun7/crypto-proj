@@ -28,6 +28,7 @@ from openssl_crypto import (
     generate_identity_keypair, generate_ephemeral_keypair,
     sign_data, verify_signature,
     perform_ecdh, derive_keys,
+    get_curve_order,
     aes_cbc_encrypt, aes_cbc_decrypt,
     compute_hmac, verify_hmac,
     pack_fields, recv_exact, send_framed, recv_framed,
@@ -134,6 +135,8 @@ class Peer:
 
     def start(self):
         """Connect (or accept), run handshake, then start messaging."""
+        print(f"[INFO] P-256 curve order n = 0x{get_curve_order():x}")
+
         if self.is_server:
             self.sock.bind((self.host, self.port))
             self.sock.listen(1)

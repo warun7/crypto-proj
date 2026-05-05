@@ -177,6 +177,34 @@ def derive_keys(shared_secret):
     return enc_key, mac_key
 
 
+def get_curve_order(curve_name="prime256v1"):
+    """Return the subgroup order n for an OpenSSL EC curve as an integer."""
+    result = subprocess.run(
+        ["openssl", "ecparam", "-name", curve_name, "-param_enc", "explicit", "-text", "-noout"],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    order_lines = []
+    capturing = False
+
+    for line in result.stdout.splitlines():
+        stripped = line.strip()
+
+        if stripped.startswith("Order:"):
+            capturing = True
+            continue
+
+        if capturing:
+            if not stripped or stripped.startswith("Cofactor:") or stripped.startswith("Seed:"):
+                break
+            order_lines.append(stripped)
+
+    order_hex = "".join(part.replace(":", "") for part in order_lines).replace(" ", "")
+    return int(order_hex, 16)
+
+
 # ──────────────────────────────────────────────────────────────────────────────
 # AES-128-CBC  Encryption / Decryption
 # ──────────────────────────────────────────────────────────────────────────────
