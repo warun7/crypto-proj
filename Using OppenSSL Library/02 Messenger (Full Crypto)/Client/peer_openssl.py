@@ -1,3 +1,4 @@
+
 """
 peer_openssl.py  —  Client side
 
@@ -115,7 +116,10 @@ class Peer:
 
         # --- ECDH shared secret ---
         shared_secret = perform_ecdh(self.key_dir, peer_ecdh_pub)
-        print(f"[+] ECDH shared secret derived ({len(shared_secret)} bytes)")
+        print(
+            f"[+] ECDH shared secret derived ({len(shared_secret)} bytes): "
+            f"{shared_secret.hex()}"
+        )
 
         # --- Key derivation ---
         self.enc_key, self.mac_key = derive_keys(shared_secret)
@@ -204,7 +208,12 @@ class Peer:
             raise ValueError("[!] HMAC verification FAILED — message tampered!")
 
         # Decrypt
-        return aes_cbc_decrypt(ciphertext, self.enc_key, iv, self.key_dir)
+        try:
+            return aes_cbc_decrypt(ciphertext, self.enc_key, iv, self.key_dir)
+        except Exception as e:
+            raise ValueError(
+                "[!] Decryption FAILED — message corrupted or padding invalid!"
+            ) from e
 
     def _receive_loop(self):
         """Receive encrypted frames, verify MAC, decrypt, and display."""
@@ -215,14 +224,18 @@ class Peer:
                     print("\n[Peer disconnected]")
                     break
                 plaintext = self._verify_and_decrypt(frame)
-                message   = plaintext.decode()
+                try:
+                    message = plaintext.decode()
+                except UnicodeDecodeError as e:
+                    print(f"\n[!] UTF-8 decode FAILED — message corrupted! ({e})")
+                    continue
                 if message.strip().lower() == "exit":
                     print("\n[Peer exited]")
                     break
                 print(f"\n[Peer]: {message}")
             except ValueError as e:
                 print(f"\n{e}")
-                break
+                continue
             except Exception as e:
                 print(f"\n[Receive error]: {e}")
                 break
@@ -245,3 +258,4 @@ class Peer:
         self.conn.close()
         self.sock.close()
         print("[*] Connection closed.")
+
